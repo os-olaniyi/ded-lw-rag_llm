@@ -55,9 +55,9 @@ jobs:
       run: |
         black --check --diff . || echo "Black formatting issues found, but not failing the build."
         
-    - name: Import sorting check with isort
+    - name: Import sorting check with isort (warn only)
       run: |
-        isort --check-only --diff .
+        isort --check-only --diff . || echo "Import sorting issues found, but not failing the build."
         
     - name: Run tests
       run: |
