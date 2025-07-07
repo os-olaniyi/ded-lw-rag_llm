@@ -159,6 +159,6 @@ jobs:
       with:
         context: .
         push: true
-        tags: ghcr.io/${{ github.repository_owner }}/rag-llm:latest
+        tags: ghcr.io/${{ github.actor }}/rag-llm:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max 
