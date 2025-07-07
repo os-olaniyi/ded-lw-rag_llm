@@ -13,24 +13,29 @@ import re
 
 persist_dir = "./chroma_index"
 
-embedding_model = HuggingFaceEmbeddings(model_name = "all-MiniLM-L6-v2")
+embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 db = Chroma(
-    persist_directory = persist_dir,
-    collection_name = "lmd_knowledge",
-    embedding_function = embedding_model
+    persist_directory=persist_dir,
+    collection_name="lmd_knowledge",
+    embedding_function=embedding_model,
 )
 
 if db:
     print("🎉 ChromaDB knowledge base ready.")
 
+
 def generate_with_llama3(prompt):
-    response = ollama.chat(model = "llama3:70b", messages = [{"role": "user", "content": prompt}])
+    response = ollama.chat(
+        model="llama3:70b", messages=[{"role": "user", "content": prompt}]
+    )
     return response["message"]["content"]
 
 
 def rag_query(query):
-    results = db.similarity_search(query, k = 3)
-    context = "\n\n".join([f"[{doc.metadata.get('source')}] {doc.page_content}" for doc in results])
+    results = db.similarity_search(query, k=3)
+    context = "\n\n".join(
+        [f"[{doc.metadata.get('source')}] {doc.page_content}" for doc in results]
+    )
     prompt = f"""You are an expert in Laser Metal Deposition Process and Transformer Algorithm and Architecture. Based on the context below, answer the question:
 
 Context:
@@ -43,7 +48,8 @@ Answer:"""
     answer = generate_with_llama3(prompt)
     return answer, context
 
-st.set_page_config(page_title = "LMD RAG Assistance", layout = "wide")
+
+st.set_page_config(page_title="LMD RAG Assistance", layout="wide")
 
 st.title("🔍 RAG Question Answering System")
 st.markdown("Ask any question related to Laser Metal Deposition...")
