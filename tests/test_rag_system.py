@@ -37,6 +37,7 @@ def test_generate_with_llama3(mock_ollama_chat):
     # Import the function (this would need to be adjusted based on actual module structure)
     # For now, we'll test the concept
     def generate_with_llama3(prompt):
+        import ollama
         response = ollama.chat(model="llama3:70b", messages=[{"role": "user", "content": prompt}])
         return response["message"]["content"]
     
