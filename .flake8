@@ -1,0 +1,19 @@
+[flake8]
+max-line-length = 88
+extend-ignore = 
+    E203,  # whitespace before ':'
+    W503,  # line break before binary operator
+    F821,  # undefined name (for test files)
+    E501   # line too long
+exclude = 
+    .git,
+    __pycache__,
+    build,
+    dist,
+    .venv,
+    venv,
+    .mypy_cache,
+    .tox,
+    .pytest_cache
+per-file-ignores =
+    tests/*:F821,E501 
