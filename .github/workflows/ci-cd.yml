@@ -11,22 +11,26 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10, 3.11]
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Set up Python 3.11
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: ${{ matrix.python-version }}
         
     - name: Cache pip dependencies
       uses: actions/cache@v4
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-3.11-${{ hashFiles('**/requirements.txt') }}
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
-          ${{ runner.os }}-pip-3.11-
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
           
     - name: Install system dependencies
       run: |
