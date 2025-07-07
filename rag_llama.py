@@ -48,7 +48,7 @@ def chunk_documents(documents):
 
 
 def store_in_chroma(chunks, persist_dir = "./chroma_index"):
-    embedding_model = HuggingFaceEmbeddings(model_name = "all-MiniLM-L6-v2")
+    embedding_model = HuggingFaceEmbeddings(model_name = "all-MiniLM-L12-v2")
     vector_store = Chroma(
         persist_directory = persist_dir,
         collection_name = "lmd_knowledge",
@@ -71,7 +71,7 @@ print("🎉 ChromaDB knowledge base ready.")
 
 persist_dir = "./chroma_index"
 
-embedding_model = HuggingFaceEmbeddings(model_name = "all-MiniLM-L6-v2")
+embedding_model = HuggingFaceEmbeddings(model_name = "all-MiniLM-L12-v2")
 db = Chroma(
     persist_directory = persist_dir,
     collection_name = "lmd_knowledge",
