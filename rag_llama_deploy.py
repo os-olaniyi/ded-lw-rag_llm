@@ -24,7 +24,7 @@ if db:
     print("🎉 ChromaDB knowledge base ready.")
 
 def generate_with_llama3(prompt):
-    response = ollama.chat(model = "llama3:70b", messages = [{"role": "user", "content": prompt}])
+    response = ollama.chat(model = "llama3", messages = [{"role": "user", "content": prompt}])
     return response["message"]["content"]
 
 
