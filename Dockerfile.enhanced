@@ -16,6 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY RAG_LLAMAv2/rag_llama_deploy_1.1av.py ./rag_llama_deploy_enhanced.py
 COPY RAG_LLAMAv2/chroma_index/ ./chroma_index/
 COPY RAG_LLAMAv2/LOGO3b.png ./LOGO3b.png
+COPY RAG_LLAMAv2/.streamlit/ ./.streamlit/
 
 # Create upload database directory
 RUN mkdir -p /app/uploads

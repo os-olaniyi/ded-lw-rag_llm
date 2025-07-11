@@ -198,10 +198,15 @@ jobs:
         cp RAG_LLAMAv2/rag_llama_deploy_1.1av.py dist/enhanced/
         cp -r RAG_LLAMAv2/chroma_index dist/enhanced/ 2>/dev/null || echo "Enhanced chroma_index not found"
         cp RAG_LLAMAv2/LOGO3b.png dist/enhanced/ 2>/dev/null || echo "Logo not found"
+        cp -r RAG_LLAMAv2/.streamlit dist/enhanced/ 2>/dev/null || echo "Streamlit config not found"
         
         echo "✅ Deployment packages created successfully"
         echo "📦 Original version: dist/original/"
         echo "🚀 Enhanced version: dist/enhanced/"
+        echo "   ├── rag_llama_deploy_1.1av.py"
+        echo "   ├── chroma_index/"
+        echo "   ├── LOGO3b.png"
+        echo "   └── .streamlit/"
         
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
