@@ -148,12 +148,6 @@ jobs:
           semgrep-results.sarif
           semgrep-results.json
         retention-days: 30
-        
-    - name: Upload to GitHub Security tab (if SARIF exists)
-      uses: github/codeql-action/upload-sarif@v3
-      if: hashFiles('semgrep-results.sarif') != ''
-      with:
-        sarif_file: semgrep-results.sarif
 
   build:
     needs: test
@@ -281,7 +275,9 @@ jobs:
         python -c "
         import sqlite3
         import hashlib
-        from RAG_LLAMAv2.rag_llama_deploy_1_1av import init_db, compute_file_hash, hash_exists, store_hash
+        import sys
+        sys.path.append('RAG_LLAMAv2')
+        from rag_llama_deploy_1_1av import init_db, compute_file_hash, hash_exists, store_hash
         
         # Test database initialization
         conn = init_db()
@@ -303,7 +299,9 @@ jobs:
         # Test keyword highlighting
         echo "🎨 Testing keyword highlighting..."
         python -c "
-        from RAG_LLAMAv2.rag_llama_deploy_1_1av import highlight_keywords
+        import sys
+        sys.path.append('RAG_LLAMAv2')
+        from rag_llama_deploy_1_1av import highlight_keywords
         
         test_text = 'This LMD process uses laser deposition on alloy substrate.'
         highlighted = highlight_keywords(test_text)
@@ -313,7 +311,9 @@ jobs:
         # Test citation cleaning
         echo "🧹 Testing citation cleaning..."
         python -c "
-        from RAG_LLAMAv2.rag_llama_deploy_1_1av import clean_citations
+        import sys
+        sys.path.append('RAG_LLAMAv2')
+        from rag_llama_deploy_1_1av import clean_citations
         
         test_text = 'This process [1, 2] shows (Smith et al., 2021) doi:10.1234/abc'
         cleaned = clean_citations(test_text)
