@@ -186,33 +186,85 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Create deployment packages
+    - name: Build Original RAG Package
       run: |
-        # Original version package
-        mkdir -p dist/original
-        cp rag_llama_deploy.py dist/original/
-        cp -r chroma_index dist/original/ 2>/dev/null || echo "Original chroma_index not found"
+        echo "📦 Building Original RAG Package"
+        echo "================================"
         
-        # Enhanced version package
-        mkdir -p dist/enhanced
-        cp RAG_LLAMAv2/rag_llama_deploy_1.1av.py dist/enhanced/
-        cp -r RAG_LLAMAv2/chroma_index dist/enhanced/ 2>/dev/null || echo "Enhanced chroma_index not found"
-        cp RAG_LLAMAv2/LOGO3b.png dist/enhanced/ 2>/dev/null || echo "Logo not found"
-        cp -r RAG_LLAMAv2/.streamlit dist/enhanced/ 2>/dev/null || echo "Streamlit config not found"
+        # Create original version package
+        mkdir -p dist/original-rag
+        cp rag_llama_deploy.py dist/original-rag/
+        cp -r chroma_index dist/original-rag/ 2>/dev/null || echo "Original chroma_index not found"
+        cp requirements.txt dist/original-rag/
+        cp Dockerfile dist/original-rag/
         
-        echo "✅ Deployment packages created successfully"
-        echo "📦 Original version: dist/original/"
-        echo "🚀 Enhanced version: dist/enhanced/"
+        # Create original version info
+        echo "Original RAG System" > dist/original-rag/README.txt
+        echo "===================" >> dist/original-rag/README.txt
+        echo "Version: 1.0" >> dist/original-rag/README.txt
+        echo "Features: Basic RAG with ChromaDB and Llama3" >> dist/original-rag/README.txt
+        echo "Deployment: streamlit run rag_llama_deploy.py" >> dist/original-rag/README.txt
+        
+        echo "✅ Original RAG package created: dist/original-rag/"
+        
+    - name: Build Enhanced RAG Package
+      run: |
+        echo "🚀 Building Enhanced RAG Package"
+        echo "================================"
+        
+        # Create enhanced version package
+        mkdir -p dist/enhanced-rag
+        cp RAG_LLAMAv2/rag_llama_deploy_1.1av.py dist/enhanced-rag/
+        cp -r RAG_LLAMAv2/chroma_index dist/enhanced-rag/ 2>/dev/null || echo "Enhanced chroma_index not found"
+        cp RAG_LLAMAv2/LOGO3b.png dist/enhanced-rag/ 2>/dev/null || echo "Logo not found"
+        cp -r RAG_LLAMAv2/.streamlit dist/enhanced-rag/ 2>/dev/null || echo "Streamlit config not found"
+        cp requirements.txt dist/enhanced-rag/
+        cp Dockerfile.enhanced dist/enhanced-rag/Dockerfile
+        
+        # Create enhanced version info
+        echo "Enhanced RAG System" > dist/enhanced-rag/README.txt
+        echo "===================" >> dist/enhanced-rag/README.txt
+        echo "Version: 2.0" >> dist/enhanced-rag/README.txt
+        echo "Features: Advanced RAG with file upload, deduplication, keyword highlighting" >> dist/enhanced-rag/README.txt
+        echo "Deployment: streamlit run rag_llama_deploy_1.1av.py" >> dist/enhanced-rag/README.txt
+        
+        echo "✅ Enhanced RAG package created: dist/enhanced-rag/"
+        
+    - name: Create Deployment Summary
+      run: |
+        echo "📊 Deployment Packages Summary"
+        echo "============================="
+        echo ""
+        echo "📦 Original RAG Package:"
+        echo "   ├── rag_llama_deploy.py"
+        echo "   ├── chroma_index/"
+        echo "   ├── requirements.txt"
+        echo "   ├── Dockerfile"
+        echo "   └── README.txt"
+        echo ""
+        echo "🚀 Enhanced RAG Package:"
         echo "   ├── rag_llama_deploy_1.1av.py"
         echo "   ├── chroma_index/"
         echo "   ├── LOGO3b.png"
-        echo "   └── .streamlit/"
+        echo "   ├── .streamlit/"
+        echo "   ├── requirements.txt"
+        echo "   ├── Dockerfile"
+        echo "   └── README.txt"
+        echo ""
+        echo "✅ Both packages ready for independent deployment!"
         
-    - name: Upload build artifacts
+    - name: Upload Original RAG Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: rag-app-builds
-        path: dist/
+        name: original-rag-deployment
+        path: dist/original-rag/
+        retention-days: 30
+        
+    - name: Upload Enhanced RAG Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: enhanced-rag-deployment
+        path: dist/enhanced-rag/
         retention-days: 30
 
   security-scan:
