@@ -167,7 +167,7 @@ jobs:
           semgrep-results.json
         retention-days: 30
 
-  build:
+  build-original:
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
@@ -207,6 +207,55 @@ jobs:
         
         echo "✅ Original RAG package created: dist/original-rag/"
         
+    - name: Original RAG Deployment Summary
+      run: |
+        echo ""
+        echo "📦 Original RAG Deployment Summary"
+        echo "=================================="
+        echo "Package: original-rag-deployment"
+        echo "Version: 1.0"
+        echo "Features: Basic RAG with ChromaDB and Llama3"
+        echo ""
+        echo "📁 Package Contents:"
+        echo "   ├── rag_llama_deploy.py"
+        echo "   ├── chroma_index/"
+        echo "   ├── requirements.txt"
+        echo "   ├── Dockerfile"
+        echo "   └── README.txt"
+        echo ""
+        echo "🚀 Deployment Options:"
+        echo "   • Streamlit: streamlit run rag_llama_deploy.py"
+        echo "   • Docker: docker build -t rag-llm:original ."
+        echo "   • Download: original-rag-deployment.zip"
+        echo ""
+        echo "✅ Original RAG package ready for deployment!"
+        
+    - name: Upload Original RAG Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: original-rag-deployment
+        path: dist/original-rag/
+        retention-days: 30
+
+  build-enhanced:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
     - name: Build Enhanced RAG Package
       run: |
         echo "🚀 Building Enhanced RAG Package"
@@ -230,19 +279,16 @@ jobs:
         
         echo "✅ Enhanced RAG package created: dist/enhanced-rag/"
         
-    - name: Create Deployment Summary
+    - name: Enhanced RAG Deployment Summary
       run: |
-        echo "📊 Deployment Packages Summary"
-        echo "============================="
         echo ""
-        echo "📦 Original RAG Package:"
-        echo "   ├── rag_llama_deploy.py"
-        echo "   ├── chroma_index/"
-        echo "   ├── requirements.txt"
-        echo "   ├── Dockerfile"
-        echo "   └── README.txt"
+        echo "🚀 Enhanced RAG Deployment Summary"
+        echo "=================================="
+        echo "Package: enhanced-rag-deployment"
+        echo "Version: 2.0"
+        echo "Features: Advanced RAG with file upload, deduplication, keyword highlighting"
         echo ""
-        echo "🚀 Enhanced RAG Package:"
+        echo "📁 Package Contents:"
         echo "   ├── rag_llama_deploy_1.1av.py"
         echo "   ├── chroma_index/"
         echo "   ├── LOGO3b.png"
@@ -251,14 +297,12 @@ jobs:
         echo "   ├── Dockerfile"
         echo "   └── README.txt"
         echo ""
-        echo "✅ Both packages ready for independent deployment!"
-        
-    - name: Upload Original RAG Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: original-rag-deployment
-        path: dist/original-rag/
-        retention-days: 30
+        echo "🚀 Deployment Options:"
+        echo "   • Streamlit: streamlit run rag_llama_deploy_1.1av.py"
+        echo "   • Docker: docker build -t rag-llm:enhanced ."
+        echo "   • Download: enhanced-rag-deployment.zip"
+        echo ""
+        echo "✅ Enhanced RAG package ready for deployment!"
         
     - name: Upload Enhanced RAG Artifacts
       uses: actions/upload-artifact@v4
