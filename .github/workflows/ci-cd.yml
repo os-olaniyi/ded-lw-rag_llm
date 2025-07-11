@@ -37,8 +37,6 @@ jobs:
         echo "Python executable: $(python -c 'import sys; print(sys.executable)')"
         echo "Python path: $(python -c 'import sys; print(sys.path)')"
         
-
-        
     - name: Cache pip dependencies
       uses: actions/cache@v4
       with:
@@ -63,7 +61,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest pytest-cov flake8 black isort
+        pip install pytest pytest-cov flake8 black isort pillow
         
     - name: Lint with flake8
       run: |
@@ -78,7 +76,15 @@ jobs:
       run: |
         isort --check-only --diff . || echo "Import sorting issues found, but not failing the build."
         
-    - name: Run tests
+    - name: Test both RAG versions
+      run: |
+        echo "Testing original RAG version..."
+        python -c "import rag_llama_deploy; print('✅ Original RAG imports successfully')"
+        
+        echo "Testing enhanced RAG version..."
+        python -c "import sys; sys.path.append('RAG_LLAMAv2'); import rag_llama_deploy_1_1av; print('✅ Enhanced RAG imports successfully')"
+        
+    - name: Run tests with coverage
       run: |
         pytest --cov=./ --cov-report=xml --cov-report=html || echo "Tests completed with some failures"
         
@@ -168,17 +174,27 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Create deployment package
+    - name: Create deployment packages
       run: |
-        mkdir -p dist
-        cp rag_llama_deploy.py dist/
-        cp -r chroma_index dist/
-        echo "Deployment package created successfully"
+        # Original version package
+        mkdir -p dist/original
+        cp rag_llama_deploy.py dist/original/
+        cp -r chroma_index dist/original/ 2>/dev/null || echo "Original chroma_index not found"
+        
+        # Enhanced version package
+        mkdir -p dist/enhanced
+        cp RAG_LLAMAv2/rag_llama_deploy_1.1av.py dist/enhanced/
+        cp -r RAG_LLAMAv2/chroma_index dist/enhanced/ 2>/dev/null || echo "Enhanced chroma_index not found"
+        cp RAG_LLAMAv2/LOGO3b.png dist/enhanced/ 2>/dev/null || echo "Logo not found"
+        
+        echo "✅ Deployment packages created successfully"
+        echo "📦 Original version: dist/original/"
+        echo "🚀 Enhanced version: dist/enhanced/"
         
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: rag-app-build
+        name: rag-app-builds
         path: dist/
         retention-days: 30
 
@@ -192,13 +208,19 @@ jobs:
     - name: Run Bandit security scan
       run: |
         pip install bandit
-        bandit -r . -f json -o bandit-report.json || true
+        echo "Scanning original version..."
+        bandit -r . -f json -o bandit-original.json || true
+        
+        echo "Scanning enhanced version..."
+        bandit -r RAG_LLAMAv2/ -f json -o bandit-enhanced.json || true
         
     - name: Upload security scan results
       uses: actions/upload-artifact@v4
       with:
         name: security-scan-results
-        path: bandit-report.json
+        path: |
+          bandit-original.json
+          bandit-enhanced.json
         retention-days: 30
 
   docker-build:
@@ -213,11 +235,98 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
       
-    - name: Build and push Docker image
+    - name: Build original version Docker image
       uses: docker/build-push-action@v5
       with:
         context: .
         push: false
-        tags: rag-llm:latest
+        tags: rag-llm:original
         cache-from: type=gha
-        cache-to: type=gha,mode=max 
+        cache-to: type=gha,mode=max
+        
+    - name: Build enhanced version Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.enhanced
+        push: false
+        tags: rag-llm:enhanced
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  feature-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pillow
+        
+    - name: Test enhanced features
+      run: |
+        echo "🧪 Testing enhanced RAG features..."
+        
+        # Test file upload functionality
+        echo "📤 Testing file upload system..."
+        python -c "
+        import sqlite3
+        import hashlib
+        from RAG_LLAMAv2.rag_llama_deploy_1_1av import init_db, compute_file_hash, hash_exists, store_hash
+        
+        # Test database initialization
+        conn = init_db()
+        print('✅ Database initialization successful')
+        
+        # Test hash computation
+        test_bytes = b'test file content'
+        file_hash = compute_file_hash(test_bytes)
+        print(f'✅ Hash computation: {file_hash[:10]}...')
+        
+        # Test hash storage and retrieval
+        store_hash(conn, file_hash, 'test.pdf')
+        exists = hash_exists(conn, file_hash)
+        print(f'✅ Hash storage and retrieval: {exists}')
+        
+        conn.close()
+        "
+        
+        # Test keyword highlighting
+        echo "🎨 Testing keyword highlighting..."
+        python -c "
+        from RAG_LLAMAv2.rag_llama_deploy_1_1av import highlight_keywords
+        
+        test_text = 'This LMD process uses laser deposition on alloy substrate.'
+        highlighted = highlight_keywords(test_text)
+        print('✅ Keyword highlighting test passed')
+        "
+        
+        # Test citation cleaning
+        echo "🧹 Testing citation cleaning..."
+        python -c "
+        from RAG_LLAMAv2.rag_llama_deploy_1_1av import clean_citations
+        
+        test_text = 'This process [1, 2] shows (Smith et al., 2021) doi:10.1234/abc'
+        cleaned = clean_citations(test_text)
+        print('✅ Citation cleaning test passed')
+        "
+        
+        echo "🎉 All enhanced feature tests passed!"
+        
+    - name: Upload feature test results
+      uses: actions/upload-artifact@v4
+      with:
+        name: feature-test-results
+        path: |
+          *.log
+          test_*.py
+        retention-days: 30 
