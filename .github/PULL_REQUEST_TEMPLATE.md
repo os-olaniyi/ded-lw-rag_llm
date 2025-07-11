@@ -1,7 +1,7 @@
 `Description`
 
-- [DRL-XXXX](https://example.com) | High-level details.
-- [DRL-XXXX](https://example.com) | High-level details.
+- [DLRL-XXXX](https://example.com) | High-level details.
+- [DLRL-XXXX](https://example.com) | High-level details.
 
 
 ## Details
