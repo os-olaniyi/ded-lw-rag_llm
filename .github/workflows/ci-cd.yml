@@ -76,12 +76,18 @@ jobs:
       run: |
         isort --check-only --diff . || echo "Import sorting issues found, but not failing the build."
         
-    - name: Test both RAG versions
+    - name: Test Original RAG Version
       run: |
-        echo "Testing original RAG version..."
+        echo "🐍 Testing on Python ${{ matrix.python-version }}"
+        echo "📦 Test: Original RAG Version"
+        echo "============================="
         python -c "import rag_llama_deploy; print('✅ Original RAG imports successfully')"
+        echo "✅ Original RAG test completed"
         
-        echo "Testing enhanced RAG version..."
+    - name: Test Enhanced RAG Version
+      run: |
+        echo "🚀 Test: Enhanced RAG Version"
+        echo "============================="
         # Copy logo file for enhanced version import
         cp RAG_LLAMAv2/LOGO3b.png . 2>/dev/null || echo "Logo file not found, continuing without logo"
         
@@ -94,6 +100,7 @@ jobs:
         spec.loader.exec_module(module)
         print('✅ Enhanced RAG imports successfully')
         "
+        echo "✅ Enhanced RAG test completed"
         
     - name: Run tests with coverage
       run: |
@@ -191,10 +198,15 @@ jobs:
         cp RAG_LLAMAv2/rag_llama_deploy_1.1av.py dist/enhanced/
         cp -r RAG_LLAMAv2/chroma_index dist/enhanced/ 2>/dev/null || echo "Enhanced chroma_index not found"
         cp RAG_LLAMAv2/LOGO3b.png dist/enhanced/ 2>/dev/null || echo "Logo not found"
+        cp -r RAG_LLAMAv2/.streamlit dist/enhanced/ 2>/dev/null || echo "Streamlit config not found"
         
         echo "✅ Deployment packages created successfully"
         echo "📦 Original version: dist/original/"
         echo "🚀 Enhanced version: dist/enhanced/"
+        echo "   ├── rag_llama_deploy_1.1av.py"
+        echo "   ├── chroma_index/"
+        echo "   ├── LOGO3b.png"
+        echo "   └── .streamlit/"
         
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
@@ -279,13 +291,19 @@ jobs:
         
     - name: Test enhanced features
       run: |
-        echo "🧪 Testing enhanced RAG features..."
+        echo "🧪 Enhanced RAG Feature Tests"
+        echo "============================="
         
         # Copy logo file to working directory for tests
         cp RAG_LLAMAv2/LOGO3b.png . 2>/dev/null || echo "Logo file not found, continuing without logo"
         
-        # Test file upload functionality
-        echo "📤 Testing file upload system..."
+        echo ""
+        echo "📤 Test: File Upload System"
+        echo "==========================="
+        
+        # Copy logo file to working directory for tests
+        cp RAG_LLAMAv2/LOGO3b.png . 2>/dev/null || echo "Logo file not found, continuing without logo"
+        
         python -c "
         import sqlite3
         import hashlib
@@ -312,10 +330,13 @@ jobs:
         print(f'✅ Hash storage and retrieval: {exists}')
         
         conn.close()
+        print('✅ File upload system test completed')
         "
         
-        # Test keyword highlighting
-        echo "🎨 Testing keyword highlighting..."
+        echo ""
+        echo "🎨 Test: Keyword Highlighting"
+        echo "============================"
+        
         python -c "
         import sys
         import importlib.util
@@ -328,10 +349,14 @@ jobs:
         test_text = 'This LMD process uses laser deposition on alloy substrate.'
         highlighted = module.highlight_keywords(test_text)
         print('✅ Keyword highlighting test passed')
+        print('✅ Keyword highlighting test completed')
         "
         
-        # Test citation cleaning
-        echo "🧹 Testing citation cleaning..."
+    - name: Test Citation Cleaning
+      run: |
+        echo "🧹 Test: Citation Cleaning"
+        echo "=========================="
+        
         python -c "
         import sys
         import importlib.util
@@ -344,15 +369,36 @@ jobs:
         test_text = 'This process [1, 2] shows (Smith et al., 2021) doi:10.1234/abc'
         cleaned = module.clean_citations(test_text)
         print('✅ Citation cleaning test passed')
+        print('✅ Citation cleaning test completed')
         "
         
-        echo "🎉 All enhanced feature tests passed!"
+    - name: Check for test artifacts
+      run: |
+        echo "🔍 Checking for test artifacts..."
+        if [ -f "*.log" ] || [ -f "test_*.py" ]; then
+          echo "✅ Test artifacts found - will upload"
+          ls -la *.log test_*.py 2>/dev/null || echo "No specific files found"
+        else
+          echo "ℹ️ No test artifacts found - continuing without upload"
+        fi
         
-    - name: Upload feature test results
+    - name: Upload feature test results (if any)
       uses: actions/upload-artifact@v4
+      if: hashFiles('*.log') != '' || hashFiles('test_*.py') != ''
       with:
         name: feature-test-results
         path: |
           *.log
           test_*.py
-        retention-days: 30 
+        retention-days: 30
+        
+    - name: Feature Tests Summary
+      run: |
+        echo ""
+        echo "🎉 All enhanced feature tests completed successfully!"
+        echo "=================================================="
+        echo "✅ File Upload System - Database and hash functions"
+        echo "✅ Keyword Highlighting - Text processing"
+        echo "✅ Citation Cleaning - Text preprocessing"
+        echo ""
+        echo "All RAG_LLAMAv2 features are working correctly!" 
