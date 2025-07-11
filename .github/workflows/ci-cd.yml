@@ -352,7 +352,8 @@ jobs:
         print('✅ Keyword highlighting test completed')
         "
         
-        echo ""
+    - name: Test Citation Cleaning
+      run: |
         echo "🧹 Test: Citation Cleaning"
         echo "=========================="
         
@@ -371,15 +372,33 @@ jobs:
         print('✅ Citation cleaning test completed')
         "
         
-        echo ""
-        echo "🎉 All enhanced feature tests passed!"
-        echo "====================================="
+    - name: Check for test artifacts
+      run: |
+        echo "🔍 Checking for test artifacts..."
+        if [ -f "*.log" ] || [ -f "test_*.py" ]; then
+          echo "✅ Test artifacts found - will upload"
+          ls -la *.log test_*.py 2>/dev/null || echo "No specific files found"
+        else
+          echo "ℹ️ No test artifacts found - continuing without upload"
+        fi
         
-    - name: Upload feature test results
+    - name: Upload feature test results (if any)
       uses: actions/upload-artifact@v4
+      if: hashFiles('*.log') != '' || hashFiles('test_*.py') != ''
       with:
         name: feature-test-results
         path: |
           *.log
           test_*.py
-        retention-days: 30 
+        retention-days: 30
+        
+    - name: Feature Tests Summary
+      run: |
+        echo ""
+        echo "🎉 All enhanced feature tests completed successfully!"
+        echo "=================================================="
+        echo "✅ File Upload System - Database and hash functions"
+        echo "✅ Keyword Highlighting - Text processing"
+        echo "✅ Citation Cleaning - Text preprocessing"
+        echo ""
+        echo "All RAG_LLAMAv2 features are working correctly!" 
