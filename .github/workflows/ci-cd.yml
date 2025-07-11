@@ -82,6 +82,9 @@ jobs:
         python -c "import rag_llama_deploy; print('✅ Original RAG imports successfully')"
         
         echo "Testing enhanced RAG version..."
+        # Copy logo file for enhanced version import
+        cp RAG_LLAMAv2/LOGO3b.png . 2>/dev/null || echo "Logo file not found, continuing without logo"
+        
         python -c "
         import sys
         import importlib.util
@@ -277,6 +280,9 @@ jobs:
     - name: Test enhanced features
       run: |
         echo "🧪 Testing enhanced RAG features..."
+        
+        # Copy logo file to working directory for tests
+        cp RAG_LLAMAv2/LOGO3b.png . 2>/dev/null || echo "Logo file not found, continuing without logo"
         
         # Test file upload functionality
         echo "📤 Testing file upload system..."
