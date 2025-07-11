@@ -76,12 +76,18 @@ jobs:
       run: |
         isort --check-only --diff . || echo "Import sorting issues found, but not failing the build."
         
-    - name: Test both RAG versions
+    - name: Test Original RAG Version
       run: |
-        echo "Testing original RAG version..."
+        echo "🐍 Testing on Python ${{ matrix.python-version }}"
+        echo "📦 Test: Original RAG Version"
+        echo "============================="
         python -c "import rag_llama_deploy; print('✅ Original RAG imports successfully')"
+        echo "✅ Original RAG test completed"
         
-        echo "Testing enhanced RAG version..."
+    - name: Test Enhanced RAG Version
+      run: |
+        echo "🚀 Test: Enhanced RAG Version"
+        echo "============================="
         # Copy logo file for enhanced version import
         cp RAG_LLAMAv2/LOGO3b.png . 2>/dev/null || echo "Logo file not found, continuing without logo"
         
@@ -94,6 +100,7 @@ jobs:
         spec.loader.exec_module(module)
         print('✅ Enhanced RAG imports successfully')
         "
+        echo "✅ Enhanced RAG test completed"
         
     - name: Run tests with coverage
       run: |
@@ -279,13 +286,19 @@ jobs:
         
     - name: Test enhanced features
       run: |
-        echo "🧪 Testing enhanced RAG features..."
+        echo "🧪 Enhanced RAG Feature Tests"
+        echo "============================="
         
         # Copy logo file to working directory for tests
         cp RAG_LLAMAv2/LOGO3b.png . 2>/dev/null || echo "Logo file not found, continuing without logo"
         
-        # Test file upload functionality
-        echo "📤 Testing file upload system..."
+        echo ""
+        echo "📤 Test: File Upload System"
+        echo "==========================="
+        
+        # Copy logo file to working directory for tests
+        cp RAG_LLAMAv2/LOGO3b.png . 2>/dev/null || echo "Logo file not found, continuing without logo"
+        
         python -c "
         import sqlite3
         import hashlib
@@ -312,10 +325,13 @@ jobs:
         print(f'✅ Hash storage and retrieval: {exists}')
         
         conn.close()
+        print('✅ File upload system test completed')
         "
         
-        # Test keyword highlighting
-        echo "🎨 Testing keyword highlighting..."
+        echo ""
+        echo "🎨 Test: Keyword Highlighting"
+        echo "============================"
+        
         python -c "
         import sys
         import importlib.util
@@ -328,10 +344,13 @@ jobs:
         test_text = 'This LMD process uses laser deposition on alloy substrate.'
         highlighted = module.highlight_keywords(test_text)
         print('✅ Keyword highlighting test passed')
+        print('✅ Keyword highlighting test completed')
         "
         
-        # Test citation cleaning
-        echo "🧹 Testing citation cleaning..."
+        echo ""
+        echo "🧹 Test: Citation Cleaning"
+        echo "=========================="
+        
         python -c "
         import sys
         import importlib.util
@@ -344,9 +363,12 @@ jobs:
         test_text = 'This process [1, 2] shows (Smith et al., 2021) doi:10.1234/abc'
         cleaned = module.clean_citations(test_text)
         print('✅ Citation cleaning test passed')
+        print('✅ Citation cleaning test completed')
         "
         
+        echo ""
         echo "🎉 All enhanced feature tests passed!"
+        echo "====================================="
         
     - name: Upload feature test results
       uses: actions/upload-artifact@v4
