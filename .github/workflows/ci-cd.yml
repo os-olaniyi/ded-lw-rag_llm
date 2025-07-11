@@ -176,17 +176,32 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    - name: Check if original RAG files changed
+      id: check-changes
+      run: |
+        echo "Checking for changes in original RAG files..."
+        if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E "(rag_llama\.py|rag_llama_deploy\.py|chroma_index/|requirements\.txt|Dockerfile)" > /dev/null; then
+          echo "✅ Original RAG files have changed - proceeding with build"
+          echo "should_build=true" >> $GITHUB_OUTPUT
+        else
+          echo "ℹ️ No changes to original RAG files - skipping build"
+          echo "should_build=false" >> $GITHUB_OUTPUT
+        fi
+        
     - name: Set up Python
+      if: steps.check-changes.outputs.should_build == 'true'
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         
     - name: Install dependencies
+      if: steps.check-changes.outputs.should_build == 'true'
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
     - name: Build Original RAG Package
+      if: steps.check-changes.outputs.should_build == 'true'
       run: |
         echo "📦 Building Original RAG Package"
         echo "================================"
@@ -208,6 +223,7 @@ jobs:
         echo "✅ Original RAG package created: dist/original-rag/"
         
     - name: Original RAG Deployment Summary
+      if: steps.check-changes.outputs.should_build == 'true'
       run: |
         echo ""
         echo "📦 Original RAG Deployment Summary"
@@ -231,6 +247,7 @@ jobs:
         echo "✅ Original RAG package ready for deployment!"
         
     - name: Upload Original RAG Artifacts
+      if: steps.check-changes.outputs.should_build == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: original-rag-deployment
@@ -246,17 +263,32 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    - name: Check if enhanced RAG files changed
+      id: check-changes
+      run: |
+        echo "Checking for changes in enhanced RAG files..."
+        if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E "(RAG_LLAMAv2/|Dockerfile\.enhanced|requirements\.txt)" > /dev/null; then
+          echo "✅ Enhanced RAG files have changed - proceeding with build"
+          echo "should_build=true" >> $GITHUB_OUTPUT
+        else
+          echo "ℹ️ No changes to enhanced RAG files - skipping build"
+          echo "should_build=false" >> $GITHUB_OUTPUT
+        fi
+        
     - name: Set up Python
+      if: steps.check-changes.outputs.should_build == 'true'
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         
     - name: Install dependencies
+      if: steps.check-changes.outputs.should_build == 'true'
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
     - name: Build Enhanced RAG Package
+      if: steps.check-changes.outputs.should_build == 'true'
       run: |
         echo "🚀 Building Enhanced RAG Package"
         echo "================================"
@@ -280,6 +312,7 @@ jobs:
         echo "✅ Enhanced RAG package created: dist/enhanced-rag/"
         
     - name: Enhanced RAG Deployment Summary
+      if: steps.check-changes.outputs.should_build == 'true'
       run: |
         echo ""
         echo "🚀 Enhanced RAG Deployment Summary"
@@ -305,6 +338,7 @@ jobs:
         echo "✅ Enhanced RAG package ready for deployment!"
         
     - name: Upload Enhanced RAG Artifacts
+      if: steps.check-changes.outputs.should_build == 'true'
       uses: actions/upload-artifact@v4
       with:
         name: enhanced-rag-deployment
