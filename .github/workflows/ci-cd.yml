@@ -7,6 +7,11 @@ on:
     branches: [ master ]
   workflow_dispatch:
 
+permissions:
+  security-events: write
+  actions: read
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -98,6 +103,7 @@ jobs:
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
+        default-cli-version: '2.22.1'
         
     - name: Autobuild
       uses: github/codeql-action/autobuild@v3
@@ -120,28 +126,25 @@ jobs:
           p/secrets
           p/owasp-top-ten
           p/python
-        output-format: sarif
-        output-file: semgrep-results.sarif
         
-    - name: Check if Semgrep results exist
+    - name: Check Semgrep results
       run: |
-        if [ -f semgrep-results.sarif ]; then
-          echo "Semgrep results file found"
-          ls -la semgrep-results.sarif
-        else
-          echo "Semgrep results file not found"
-          ls -la *.sarif || echo "No SARIF files found"
-        fi
+        echo "Checking for Semgrep output files..."
+        ls -la semgrep-results.sarif 2>/dev/null || echo "semgrep-results.sarif not found"
+        ls -la semgrep-results.json 2>/dev/null || echo "semgrep-results.json not found"
+        find . -name "*.sarif" -o -name "*.json" | head -10
         
-    - name: Upload Semgrep results
+    - name: Upload Semgrep results (if any)
       uses: actions/upload-artifact@v4
-      if: hashFiles('semgrep-results.sarif') != ''
+      if: hashFiles('semgrep-results.*') != ''
       with:
         name: semgrep-results
-        path: semgrep-results.sarif
+        path: |
+          semgrep-results.sarif
+          semgrep-results.json
         retention-days: 30
         
-    - name: Upload to GitHub Security tab
+    - name: Upload to GitHub Security tab (if SARIF exists)
       uses: github/codeql-action/upload-sarif@v3
       if: hashFiles('semgrep-results.sarif') != ''
       with:
