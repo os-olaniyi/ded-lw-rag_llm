@@ -2,10 +2,15 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ master, 'DRL-*' ]
+    branches: [ master, 'DRL-*', 'DLRL-*']
   pull_request:
     branches: [ master ]
   workflow_dispatch:
+
+permissions:
+  security-events: write
+  actions: read
+  contents: read
 
 jobs:
   test:
@@ -82,6 +87,67 @@ jobs:
       with:
         file: ./coverage.xml
         fail_ci_if_error: false
+
+  codeql:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        language: ['python']
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+      
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+
+  semgrep:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Semgrep security scan
+      uses: returntocorp/semgrep-action@v1
+      with:
+        config: >-
+          p/security-audit
+          p/secrets
+          p/owasp-top-ten
+          p/python
+        
+    - name: Check Semgrep results
+      run: |
+        echo "Checking for Semgrep output files..."
+        ls -la semgrep-results.sarif 2>/dev/null || echo "semgrep-results.sarif not found"
+        ls -la semgrep-results.json 2>/dev/null || echo "semgrep-results.json not found"
+        find . -name "*.sarif" -o -name "*.json" | head -10
+        
+    - name: Upload Semgrep results (if any)
+      uses: actions/upload-artifact@v4
+      if: hashFiles('semgrep-results.*') != ''
+      with:
+        name: semgrep-results
+        path: |
+          semgrep-results.sarif
+          semgrep-results.json
+        retention-days: 30
+        
+    - name: Upload to GitHub Security tab (if SARIF exists)
+      uses: github/codeql-action/upload-sarif@v3
+      if: hashFiles('semgrep-results.sarif') != ''
+      with:
+        sarif_file: semgrep-results.sarif
 
   build:
     needs: test
