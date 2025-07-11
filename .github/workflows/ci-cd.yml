@@ -103,7 +103,6 @@ jobs:
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
-        default-cli-version: '2.22.1'
         
     - name: Autobuild
       uses: github/codeql-action/autobuild@v3
