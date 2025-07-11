@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ master, 'DRL-*' ]
+    branches: [ master, 'DRL-*', 'DLRL-*']
   pull_request:
     branches: [ master ]
   workflow_dispatch:
