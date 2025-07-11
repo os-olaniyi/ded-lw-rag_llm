@@ -167,7 +167,7 @@ jobs:
           semgrep-results.json
         retention-days: 30
 
-  build:
+  build-original:
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
@@ -176,43 +176,173 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    - name: Check if original RAG files changed
+      id: check-changes
+      run: |
+        echo "Checking for changes in original RAG files..."
+        if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E "(rag_llama\.py|rag_llama_deploy\.py|chroma_index/|requirements\.txt|Dockerfile)" > /dev/null; then
+          echo "✅ Original RAG files have changed - proceeding with build"
+          echo "should_build=true" >> $GITHUB_OUTPUT
+        else
+          echo "ℹ️ No changes to original RAG files - skipping build"
+          echo "should_build=false" >> $GITHUB_OUTPUT
+        fi
+        
     - name: Set up Python
+      if: steps.check-changes.outputs.should_build == 'true'
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         
     - name: Install dependencies
+      if: steps.check-changes.outputs.should_build == 'true'
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Create deployment packages
+    - name: Build Original RAG Package
+      if: steps.check-changes.outputs.should_build == 'true'
       run: |
-        # Original version package
-        mkdir -p dist/original
-        cp rag_llama_deploy.py dist/original/
-        cp -r chroma_index dist/original/ 2>/dev/null || echo "Original chroma_index not found"
+        echo "📦 Building Original RAG Package"
+        echo "================================"
         
-        # Enhanced version package
-        mkdir -p dist/enhanced
-        cp RAG_LLAMAv2/rag_llama_deploy_1.1av.py dist/enhanced/
-        cp -r RAG_LLAMAv2/chroma_index dist/enhanced/ 2>/dev/null || echo "Enhanced chroma_index not found"
-        cp RAG_LLAMAv2/LOGO3b.png dist/enhanced/ 2>/dev/null || echo "Logo not found"
-        cp -r RAG_LLAMAv2/.streamlit dist/enhanced/ 2>/dev/null || echo "Streamlit config not found"
+        # Create original version package
+        mkdir -p dist/original-rag
+        cp rag_llama_deploy.py dist/original-rag/
+        cp -r chroma_index dist/original-rag/ 2>/dev/null || echo "Original chroma_index not found"
+        cp requirements.txt dist/original-rag/
+        cp Dockerfile dist/original-rag/
         
-        echo "✅ Deployment packages created successfully"
-        echo "📦 Original version: dist/original/"
-        echo "🚀 Enhanced version: dist/enhanced/"
+        # Create original version info
+        echo "Original RAG System" > dist/original-rag/README.txt
+        echo "===================" >> dist/original-rag/README.txt
+        echo "Version: 1.0" >> dist/original-rag/README.txt
+        echo "Features: Basic RAG with ChromaDB and Llama3" >> dist/original-rag/README.txt
+        echo "Deployment: streamlit run rag_llama_deploy.py" >> dist/original-rag/README.txt
+        
+        echo "✅ Original RAG package created: dist/original-rag/"
+        
+    - name: Original RAG Deployment Summary
+      if: steps.check-changes.outputs.should_build == 'true'
+      run: |
+        echo ""
+        echo "📦 Original RAG Deployment Summary"
+        echo "=================================="
+        echo "Package: original-rag-deployment"
+        echo "Version: 1.0"
+        echo "Features: Basic RAG with ChromaDB and Llama3"
+        echo ""
+        echo "📁 Package Contents:"
+        echo "   ├── rag_llama_deploy.py"
+        echo "   ├── chroma_index/"
+        echo "   ├── requirements.txt"
+        echo "   ├── Dockerfile"
+        echo "   └── README.txt"
+        echo ""
+        echo "🚀 Deployment Options:"
+        echo "   • Streamlit: streamlit run rag_llama_deploy.py"
+        echo "   • Docker: docker build -t rag-llm:original ."
+        echo "   • Download: original-rag-deployment.zip"
+        echo ""
+        echo "✅ Original RAG package ready for deployment!"
+        
+    - name: Upload Original RAG Artifacts
+      if: steps.check-changes.outputs.should_build == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: original-rag-deployment
+        path: dist/original-rag/
+        retention-days: 30
+
+  build-enhanced:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Check if enhanced RAG files changed
+      id: check-changes
+      run: |
+        echo "Checking for changes in enhanced RAG files..."
+        if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E "(RAG_LLAMAv2/|Dockerfile\.enhanced|requirements\.txt)" > /dev/null; then
+          echo "✅ Enhanced RAG files have changed - proceeding with build"
+          echo "should_build=true" >> $GITHUB_OUTPUT
+        else
+          echo "ℹ️ No changes to enhanced RAG files - skipping build"
+          echo "should_build=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Set up Python
+      if: steps.check-changes.outputs.should_build == 'true'
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      if: steps.check-changes.outputs.should_build == 'true'
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Build Enhanced RAG Package
+      if: steps.check-changes.outputs.should_build == 'true'
+      run: |
+        echo "🚀 Building Enhanced RAG Package"
+        echo "================================"
+        
+        # Create enhanced version package
+        mkdir -p dist/enhanced-rag
+        cp RAG_LLAMAv2/rag_llama_deploy_1.1av.py dist/enhanced-rag/
+        cp -r RAG_LLAMAv2/chroma_index dist/enhanced-rag/ 2>/dev/null || echo "Enhanced chroma_index not found"
+        cp RAG_LLAMAv2/LOGO3b.png dist/enhanced-rag/ 2>/dev/null || echo "Logo not found"
+        cp -r RAG_LLAMAv2/.streamlit dist/enhanced-rag/ 2>/dev/null || echo "Streamlit config not found"
+        cp requirements.txt dist/enhanced-rag/
+        cp Dockerfile.enhanced dist/enhanced-rag/Dockerfile
+        
+        # Create enhanced version info
+        echo "Enhanced RAG System" > dist/enhanced-rag/README.txt
+        echo "===================" >> dist/enhanced-rag/README.txt
+        echo "Version: 2.0" >> dist/enhanced-rag/README.txt
+        echo "Features: Advanced RAG with file upload, deduplication, keyword highlighting" >> dist/enhanced-rag/README.txt
+        echo "Deployment: streamlit run rag_llama_deploy_1.1av.py" >> dist/enhanced-rag/README.txt
+        
+        echo "✅ Enhanced RAG package created: dist/enhanced-rag/"
+        
+    - name: Enhanced RAG Deployment Summary
+      if: steps.check-changes.outputs.should_build == 'true'
+      run: |
+        echo ""
+        echo "🚀 Enhanced RAG Deployment Summary"
+        echo "=================================="
+        echo "Package: enhanced-rag-deployment"
+        echo "Version: 2.0"
+        echo "Features: Advanced RAG with file upload, deduplication, keyword highlighting"
+        echo ""
+        echo "📁 Package Contents:"
         echo "   ├── rag_llama_deploy_1.1av.py"
         echo "   ├── chroma_index/"
         echo "   ├── LOGO3b.png"
-        echo "   └── .streamlit/"
+        echo "   ├── .streamlit/"
+        echo "   ├── requirements.txt"
+        echo "   ├── Dockerfile"
+        echo "   └── README.txt"
+        echo ""
+        echo "🚀 Deployment Options:"
+        echo "   • Streamlit: streamlit run rag_llama_deploy_1.1av.py"
+        echo "   • Docker: docker build -t rag-llm:enhanced ."
+        echo "   • Download: enhanced-rag-deployment.zip"
+        echo ""
+        echo "✅ Enhanced RAG package ready for deployment!"
         
-    - name: Upload build artifacts
+    - name: Upload Enhanced RAG Artifacts
+      if: steps.check-changes.outputs.should_build == 'true'
       uses: actions/upload-artifact@v4
       with:
-        name: rag-app-builds
-        path: dist/
+        name: enhanced-rag-deployment
+        path: dist/enhanced-rag/
         retention-days: 30
 
   security-scan:
